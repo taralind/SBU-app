@@ -1,0 +1,40 @@
+name: Compile brms Skeleton
+
+# This tells GitHub to run the script when you push files, or manually.
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: 
+
+jobs:
+  build-model:
+    runs-on: ubuntu-latest # This is the magic! A Linux machine just like shinyapps.io
+    
+    # Give the machine 10 minutes to finish the job before timing out
+    timeout-minutes: 60 
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true # Speeds up Linux package installations immensely
+
+      - name: Install System Dependencies for Stan
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libv8-dev
+
+      - name: Restore renv packages
+        uses: r-lib/actions/setup-renv@v2
+        
+      - name: Compile the Model Skeleton
+        run: Rscript build_skeleton.R
+
+      - name: Rescue the compiled file
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-model-skeleton
+          path: model_skeleton.rds
